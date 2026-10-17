@@ -616,7 +616,6 @@ function weiterWahl(w) {
   const r = R(); merken();
   if (w === 'sichern') r.status = 'gesichert';
   state.dialog = null;
-  if (mehrere()) { if (w === 'sichern') zielPruefen(); naechster(true); return; }
   if (w === 'sichern' && zielPruefen()) { speichern(); render(true); return; }
   state.wurf = null; state.cur++; speichern(); render(true); window.scrollTo(0, 0);
 }
@@ -627,11 +626,7 @@ function weiterLabel() {
   return (party.zielAktiv || party.sheets.every(s => s.cur >= RUNDEN - 1)) ? 'Partie beenden' : 'Runde ' + (state.cur + 2) + ' für alle ›';
 }
 function weiter() {
-  if (mehrere()) {
-    const r = R();
-    if (r.status === 'offen' && r.f.length) { state.dialog = { art: 'weiter' }; render(false); return; }
-    naechster(); return;
-  }
+  if (mehrere()) { naechster(); return; }         // keine Nachfrage: Beenden oder Sichern geschieht über „Aussteigen & sichern“
   const r = R();
   if (state.cur >= RUNDEN - 1) { if (zielErreicht()) { merken(); zielPruefen(); speichern(); render(false); window.scrollTo(0, 0); } else beenden(); return; }
   if (r.status === 'offen' && r.f.length) { state.dialog = { art: 'weiter' }; render(false); return; }
