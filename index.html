@@ -236,7 +236,7 @@ button:disabled{cursor:not-allowed;}
 .zerl div{display:flex;justify-content:space-between;}.zerl div b{font-variant-numeric:tabular-nums;}
 .zerl .su{border-top:1px solid var(--edge);margin-top:4px;padding-top:4px;font-weight:800;color:#fff;font-size:15px;}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:420px;width:calc(100% - 28px);
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top,0px));pointer-events:none;max-width:420px;width:calc(100% - 28px);
   background:var(--paper);color:var(--ink);padding:11px 15px;border-radius:var(--rs);font-size:13px;font-weight:600;line-height:1.45;z-index:70;
   box-shadow:0 6px 24px rgba(0,0,0,.5);border-left:6px solid var(--pink);}
 #nosleep-vid{position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;}
@@ -270,6 +270,35 @@ button:disabled{cursor:not-allowed;}
 .rang small{font-size:10.5px;color:var(--text2);font-weight:700;}
 .step .s button.tg{width:auto;padding:0 14px;font-size:13px;font-weight:800;}
 .step .s button.an{border-color:var(--pink);background:var(--pink-dim);color:#fff;}
+
+/* ── Spielfenster im Vordergrund, Spielblatt dahinter ── */
+.fenster{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(58px + env(safe-area-inset-bottom,0px));width:100%;max-width:540px;z-index:30;
+  background:var(--case);border:2px solid var(--pink);border-bottom:none;border-radius:20px 20px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.6);
+  padding:10px 12px 12px;max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px);overflow-y:auto;}
+.fkopf{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.fname{flex:1;min-width:0;}
+.fname b{display:block;font-weight:800;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fname small{display:block;font-size:11px;font-weight:700;color:var(--text2);}
+.fz{background:var(--paper);color:var(--ink);border-radius:9px;padding:2px 10px;text-align:center;min-width:58px;}
+.fz span{display:block;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6b7683;}
+.fz b{display:block;font-size:20px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums;}
+.fenster .strip{margin-bottom:2px;}
+.fenster .sc{height:44px;font-size:19px;border-radius:9px;}
+.fenster .sc.p small{font-size:10px;}
+.fenster .sz{height:20px;font-size:11px;}
+.fenster .hinweis{margin-top:6px;font-size:12px;line-height:1.4;}
+.fenster .dice{margin:8px 0;}
+.fenster .die{width:68px;height:68px;font-size:32px;border-radius:16px;}
+.fenster .die svg{width:46px;height:46px;}
+.fenster .pad button{height:46px;font-size:20px;}
+.fenster .btn{min-height:46px;font-size:13px;}
+.fenster .btn.gross{min-height:56px;font-size:16px;}
+.fenster .zeile2{margin-top:8px;}
+.mini{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(68px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:12px;
+  border:none;border-radius:26px;background:var(--pink);color:#fff;padding:11px 20px;font-weight:800;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.55);}
+.mini b{font-variant-numeric:tabular-nums;opacity:.9;font-size:13px;}
+.opt:disabled{opacity:.35;}
+.opt .ic{color:var(--lime);}
 
 /* ── Tablet / breit: Blatt links groß, Eingabe rechts ── */
 @media(min-width:860px){
@@ -330,7 +359,7 @@ function neuesDeck() { const d = []; Object.keys(DECK).forEach(k => { for (let i
 const neueRunde = () => ({ f: [], klammer: null, status: 'offen', zc: false, doppelt: false, korr: 0, override: null });
 const neueJoker = () => [{ typ: 'sn', used: null }, { typ: 'zc', used: null }, { typ: 'ep', used: null }, { typ: null, used: null }, { typ: null, used: null }];
 const neuerStand = () => ({ v: 3, setupDone: false, name: '', cur: 0, tab: 'spiel', phase: 'play',
-  rounds: Array.from({ length: RUNDEN }, neueRunde), joker: neueJoker(), pendingNew: false, dialog: null, wurf: null, zeigePad: false, setup: null });
+  rounds: Array.from({ length: RUNDEN }, neueRunde), joker: neueJoker(), pendingNew: false, dialog: null, wurf: null, panel: true, setup: null });
 let state = neuerStand();
 let verlauf = [];
 
@@ -616,6 +645,7 @@ const ICON = {
   wake: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
   fs: '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
   fsx: '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>',
+  blatt: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/>',
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'
 };
 const WUERFEL = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="5" width="38" height="38" rx="9" fill="#2f6fed"/><circle cx="16" cy="16" r="3.6" fill="#fff"/><circle cx="32" cy="16" r="3.6" fill="#fff"/><circle cx="24" cy="24" r="3.6" fill="#fff"/><circle cx="16" cy="32" r="3.6" fill="#fff"/><circle cx="32" cy="32" r="3.6" fill="#fff"/></svg>';
@@ -669,35 +699,46 @@ function padHtml(r) {
   for (let n = 1; n <= 12; n++) h += '<button data-a="num" data-n="' + n + '" class="' + (r.f.some(e => !e.p && e.n === n) ? 'drin' : '') + '"' + (offen ? '' : ' disabled') + '>' + n + '</button>';
   return h + '</div>';
 }
-function spielEingabe() {
-  const r = R(), d = detail(r), c = state.cur, offen = r.status === 'offen';
-  const zuk = istZukunft(c), st = zuk ? 'zukunft' : r.status, statusTxt = { offen: 'läuft', gesichert: 'gesichert', genullt: 'genullt', zukunft: 'kommt noch' }[st];
-  let h = '<div class="karte"><div class="rnav"><button class="rnb" data-a="runde" data-i="' + (c - 1) + '"' + (c === 0 ? ' disabled' : '') + ' aria-label="Vorige Runde">‹</button>' +
-    '<div class="rtitel">Runde ' + (c + 1) + '<small><span class="status ' + st + '">' + statusTxt + '</span></small></div>' +
-    '<div class="rpunkte"><div class="flap rp' + (benutzt(r) ? '' : ' leer') + '" id="rt-val">' + (benutzt(r) ? fmt(d.punkte) : '–') + '</div><small>Punkte</small></div>' +
-    '<button class="rnb" data-a="runde" data-i="' + (c + 1) + '"' + (c === RUNDEN - 1 ? ' disabled' : '') + ' aria-label="Nächste Runde">›</button></div>' +
-    zeileGross(r, zuk) + '<div class="hinweis">' + hinweisZeile(r, zuk) + '</div></div>';
-  const pad = !party.digW || state.zeigePad;
-  if (party.digW) h += wuerfelKarte(r);
-  h += '<div class="karte">' + (pad ? '<div class="kopfz"><span class="titel">Höheren Würfel antippen</span><span class="klein">Eule + neue Zahl? Zahl normal eintragen.</span></div>' + padHtml(r) : '') +
-    '<div class="zeile2"' + (pad ? '' : ' style="margin-top:0"') + '><button class="btn pink" data-a="pasch"' + (offen ? '' : ' disabled') + '>Pasch<small>' + (party.digK ? 'Karten ziehen (von Hand)' : 'P ins Feld + Kartenpunkte') + '</small></button>' +
-    '<button class="btn still" data-a="del"' + (r.f.length ? '' : ' disabled') + '>⌫ Letztes Feld<small>löschen</small></button></div>' +
-    (party.digW ? '<div class="zeile2"><button class="btn rand" data-a="pad">' + (state.zeigePad ? 'Zahlenfeld ausblenden' : 'Zahl von Hand eintragen') + '</button></div>' : '') +
-    '<div class="zeile2">' + (offen
-      ? '<button class="btn gruen gross" data-a="sichern"' + (r.f.length ? '' : ' disabled') + '>Aussteigen &amp; sichern</button><button class="btn rand gross" data-a="nullen"' + (r.f.length ? '' : ' disabled') + '>Genullt</button>'
-      : '<button class="btn pink gross" data-a="weiter">' + weiterLabel() + '</button><button class="btn still gross" data-a="oeffnen">Wieder öffnen</button>') + '</div></div>';
-  h += '<div class="karte"><div class="kopfz"><span class="titel g">Joker</span><span class="klein">je 1× pro Spiel · vor dem Wurf ansagen</span></div><div class="jokers">' +
-    state.joker.map((j, i) => {
-      if (j.typ === null) return '<button class="jk leer" data-a="joker" data-i="' + i + '" aria-label="Bonus-Jokerfeld"><b>+</b><span>Bonus-Feld</span></button>';
-      const hier = j.used === state.cur, zus = j.typ === 'zc' && r.zc && hier ? ' scharf' : '';
-      return '<button class="jk' + (j.used === null ? '' : ' weg') + (hier ? ' hier' : '') + zus + '" data-a="joker" data-i="' + i + '"><b>' + JOKERZEICHEN[j.typ] + '</b><span>' +
-        (j.used === null ? JOKERKURZ[j.typ] : (zus ? 'scharf!' : 'Runde ' + (j.used + 1))) + '</span></button>';
-    }).join('') + '</div></div>';
-  h += '<div class="karte"><div class="sum"><div class="l"><b>Runde ' + (c + 1) + ': ' + fmt(d.punkte) + ' Punkte</b><span class="klein">' +
-    (r.override !== null ? 'von dir direkt eingetragen' : 'Zahlen ' + fmt(d.basis) + (d.bonus ? ' + Bonus ' + d.bonus : '') + (d.dop ? ' · ×2' : '') + (d.korr ? ' · Korrektur ' + (d.korr > 0 ? '+' : '') + d.korr : '')) +
-    '</span></div><div class="flap" id="rt-val2">' + fmt(d.punkte) + '</div></div>' +
-    '<div class="zeile2"><button class="btn still" data-a="detail" data-i="' + c + '">Details ändern</button>' +
-    '<button class="btn pink" data-a="weiter">' + weiterLabel() + '</button></div></div>';
+/* Spielfenster: im Vordergrund alles, was man zum Spielen braucht. Das Spielblatt liegt im Hintergrund. */
+const freieJoker = () => state.joker.filter(j => j.typ && j.used === null).length;
+function jokerHtml() {
+  const r = R();
+  return state.joker.map((j, i) => {
+    if (j.typ === null) return '<button class="jk leer" data-a="joker" data-i="' + i + '" aria-label="Bonus-Jokerfeld"><b>+</b><span>Bonus-Feld</span></button>';
+    const hier = j.used === state.cur, zus = j.typ === 'zc' && r.zc && hier ? ' scharf' : '';
+    return '<button class="jk' + (j.used === null ? '' : ' weg') + (hier ? ' hier' : '') + zus + '" data-a="joker" data-i="' + i + '"><b>' + JOKERZEICHEN[j.typ] + '</b><span>' +
+      (j.used === null ? JOKERKURZ[j.typ] : (zus ? 'scharf!' : 'Runde ' + (j.used + 1))) + '</span></button>';
+  }).join('');
+}
+function spielFenster() {
+  if (state.phase !== 'play') return '';
+  const r = R(), d = detail(r), c = state.cur, offen = r.status === 'offen', zuk = istZukunft(c);
+  if (state.panel === false) return '<button class="mini" data-a="panel"><span>▲ Zum Spiel</span><b>R' + (c + 1) + ' · ' + fmt(gesamt()) + ' Pkt</b></button>';
+  const w = state.wurf, rolling = !!(w && w.rolling);
+  const st = zuk ? 'kommt noch' : { offen: 'läuft', gesichert: 'gesichert', genullt: 'genullt' }[r.status];
+  let h = '<div class="fenster"><div class="fkopf"><div class="fname"><b>' + (mehrere() ? esc(state.name) : 'Deine Runde') + '</b><small>Runde ' + (c + 1) + ' von ' + RUNDEN + ' · ' + st + '</small></div>' +
+    '<div class="fz"><span>Runde</span><b id="rt-val">' + (benutzt(r) ? fmt(d.punkte) : '–') + '</b></div><div class="fz"><span>Gesamt</span><b>' + fmt(gesamt()) + '</b></div>' +
+    '<button class="ikn" data-a="panel" title="Spielblatt anzeigen" aria-label="Spielblatt anzeigen"><svg viewBox="0 0 24 24">' + ICON.blatt + '</svg></button></div>';
+  h += zeileGross(r, zuk);
+  const zeigeWurf = party.digW && w && w.text && offen && !r.zc && !zuk;
+  h += '<div class="hinweis">' + (zeigeWurf ? esc(w.text) : hinweisZeile(r, zuk)) + '</div>';
+  if (offen) {
+    if (party.digW) {
+      h += '<div class="dice">' + dieHtml(w ? w.a : null, rolling) + dieHtml(w ? w.b : null, rolling) + '</div>' +
+        '<div class="zeile2"><button class="btn pink gross" data-a="wuerfeln"' + (rolling ? ' disabled' : '') + '>Würfeln</button></div>';
+    } else {
+      h += '<div class="kopfz" style="margin-top:10px"><span class="titel">Höheren Würfel antippen</span><span class="klein">Eule + neue Zahl? Zahl normal eintragen.</span></div>' + padHtml(r) +
+        '<div class="zeile2"><button class="btn pink" data-a="pasch">Pasch<small>' + (party.digK ? 'Karten ziehen' : 'P ins Feld + Kartenpunkte') + '</small></button>' +
+        '<button class="btn rand" data-a="nullen"' + (r.f.length ? '' : ' disabled') + '>Genullt</button></div>';
+    }
+    h += '<div class="zeile2"><button class="btn still" data-a="jokerwahl">Joker<small>' + freieJoker() + ' frei</small></button>' +
+      '<button class="btn gruen" data-a="sichern"' + (r.f.length ? '' : ' disabled') + '>Aussteigen &amp; sichern</button></div>';
+  } else {
+    h += '<div class="zeile2"><button class="btn pink gross" data-a="weiter">' + weiterLabel() + '</button></div>' +
+      '<div class="zeile2"><button class="btn still" data-a="oeffnen">Wieder öffnen</button></div>';
+  }
+  h += '<div class="zeile2"><button class="btn still" data-a="undo"' + (verlauf.length ? '' : ' disabled') + '>↶ Zurück</button>' +
+    (offen ? '<button class="btn still" data-a="weiter">' + weiterLabel() + '</button>' : '') + '<button class="btn still" data-a="mehr">⋯ Mehr</button></div></div>';
   return h;
 }
 
@@ -706,14 +747,6 @@ const EULE = '<svg viewBox="0 0 40 40" role="img" aria-label="Eule"><path d="M8 
 function dieHtml(x, rolling) {
   return '<div class="die' + (rolling ? ' roll' : '') + (x === EULE_WERT && !rolling ? ' eule' : '') + '">' + (rolling || x == null ? '?' : x === EULE_WERT ? EULE : x) + '</div>';
 }
-function wuerfelKarte(r) {
-  const w = state.wurf, rolling = !!(w && w.rolling), offen = r.status === 'offen' && state.phase === 'play';
-  return '<div class="karte"><div class="kopfz"><span class="titel">Würfel</span><span class="klein">2 × W12 · Eule statt 1</span></div>' +
-    '<div class="dice">' + dieHtml(w ? w.a : null, rolling) + dieHtml(w ? w.b : null, rolling) + '</div>' +
-    '<div class="hinweis" style="text-align:center;margin-top:0;margin-bottom:10px">' + (w && w.text ? esc(w.text) : 'Tippe auf Würfeln. Der höhere Würfel zählt, die Eule ist ein Joker.') + '</div>' +
-    '<div class="zeile2"><button class="btn pink gross" data-a="wuerfeln"' + (offen && !rolling ? '' : ' disabled') + '>Würfeln</button></div></div>';
-}
-
 /* Mehrere Spieler: Leiste oben, Rangliste am Ende */
 function spielerLeiste() {
   if (!mehrere()) return '';
@@ -768,7 +801,7 @@ function banner() {
 }
 function spiel() {
   if (state.phase === 'done') return endstand();
-  return '<div class="screen">' + banner() + spielerLeiste() + '<div class="spiel"><div class="col-eingabe">' + spielEingabe() + '</div><div class="col-blatt">' + blatt() + '</div></div></div>';
+  return '<div class="screen">' + banner() + spielerLeiste() + blatt() + '</div>';
 }
 function endstand() {
   return '<div class="screen"><div class="karte" style="text-align:center;padding:26px 16px"><div class="titel">Endstand' + (state.name ? ' · ' + esc(state.name) : '') + '</div>' +
@@ -789,15 +822,15 @@ function regeln() {
     '<li><b>Eulen-Pasch:</b> Zwei Eulen. Du ziehst ' + EULENPASCHKARTEN + ' Karten und wählst eine davon.</li>' +
     '<li><b>Doppelte Zahl ohne Eule:</b> genullt, außer du hast vorher einen Wiederholungs-Joker angesagt.</li>' +
     '<li><b>Karten:</b> Das Deck (' + neuesDeck().length + ' Karten) ist ein eigenes Deck dieser App und enthält keine Karten aus dem Originalspiel. Der Ablagestapel wird neu gemischt, wenn der Stapel zu klein wird.</li>' +
-    '<li><b>Echte Würfel oder Karten:</b> Beim Start der Partie wählbar. Mit „Zahl von Hand eintragen“ und dem Pasch-Knopf geht beides auch mit echtem Material.</li>' +
+    '<li><b>Echte Würfel oder Karten:</b> Beim Start der Partie wählbar. Auch mit App-Würfeln gehen „Zahl von Hand eintragen“ und „Pasch von Hand“ unter „Mehr“.</li>' +
     '<li><b>Mehrere Spieler:</b> Oben tippst du einen Spieler an. „Nächster Spieler“ springt zum nächsten, der noch spielt. Sind alle fertig, geht es für alle in die nächste Runde. Ab ' + ZIEL + ' Punkten wird die Runde für alle zu Ende gespielt.</li></ul></div>' +
     '<div class="karte"><h3>So bedienst du die App</h3><ul>' +
-    '<li>Oben die große Rundenzeile, darunter der Zahlenblock. Unten das Spielblatt mit allen 10 Runden, auf dem Tablet daneben.</li>' +
-    '<li>Tippe den <b>höheren</b> Würfel an, die Zahl landet im nächsten Feld.</li>' +
-    '<li>Zahl schon in der Zeile? Tipp sie trotzdem an. Die App fragt, was dich rettet oder ob du genullt hast.</li>' +
-    '<li><b>Pasch</b>: Tipp „Pasch“ und trag ein, was die gezogene Karte gebracht hat.</li>' +
-    '<li><b>Aussteigen &amp; sichern</b> oder <b>Genullt</b> beendet deine Runde, „Nächste Runde“ geht weiter.</li>' +
-    '<li>Eingetragenes Feld antippen: löschen oder Kartenpunkte ändern. „Details ändern“: Korrektur, Runde doppelt, Punkte direkt vorgeben. „↶“ nimmt die letzte Eingabe zurück.</li></ul></div>' +
+    '<li>Im Vordergrund liegt das <b>Spielfenster</b> mit Würfeln, Joker, Aussteigen, Nächster Spieler, Zurück und Mehr. Dahinter liegt das Spielblatt mit allen Runden und Zahlen.</li>' +
+    '<li>Das Tabellen-Symbol im Spielfenster blendet das Fenster aus, „Zum Spiel“ blendet es wieder ein.</li>' +
+    '<li>Mit echten Würfeln erscheint statt des Würfelns ein Zahlenfeld: den <b>höheren</b> Würfel antippen, die Zahl landet im nächsten Feld. Eine doppelte Zahl fragt nach Eule, Joker oder Nullen.</li>' +
+    '<li><b>Aussteigen &amp; sichern</b> beendet deine Runde. Danach geht es mit „Nächste Runde“ oder „Nächster Spieler“ weiter.</li>' +
+    '<li>Unter <b>Mehr</b>: Zahl oder Pasch von Hand, Genullt, Letztes Feld löschen, Details und Korrektur, Runde ansehen, Neue Partie. „↶ Zurück“ nimmt die letzte Eingabe zurück.</li>' +
+    '<li>Eingetragenes Feld in der Zeile antippen: löschen oder Kartenpunkte ändern.</li></ul></div>' +
     '<div class="karte"><h3>So rechnet die App</h3><ul>' +
     '<li>Runde = Zahlen + Punkte aus P-Feldern + <b>Bonus des zuletzt erreichten Feldes</b> (nur dieser, nicht addiert).</li></ul>' +
     '<table><tr><td>Start, Wurf 1, Wurf 2</td><td>kein Bonus</td></tr><tr><td>Wurf 3</td><td>+5</td></tr><tr><td>Wurf 4</td><td>+10</td></tr><tr><td>Wurf 5</td><td>+15</td></tr><tr><td>Wurf 6</td><td>+20</td></tr></table>' +
@@ -825,7 +858,34 @@ function dialog() {
   if (d.art === 'ziel') return zielDialog();
   if (d.art === 'weiter') return weiterDialog();
   if (d.art === 'genullt') return genulltDialog(d);
+  if (d.art === 'mehr') return mehrDialog();
+  if (d.art === 'jokerwahl') return jokerWahlDialog();
+  if (d.art === 'pad') return padDialog();
   return '';
+}
+/* Pop-ups zum Spielfenster */
+function mehrDialog() {
+  const r = R(), c = state.cur, offen = r.status === 'offen';
+  const o = (cls, ic, nm, bs, a) => '<button class="opt ' + cls + '" ' + a + '><span class="ic">' + ic + '</span><div><div class="nm">' + nm + '</div><div class="bs">' + bs + '</div></div></button>';
+  return ov('<div class="dt">Mehr</div><div class="opts" style="margin-top:10px">' +
+    (offen && party.digW ? o('', '12', 'Zahl von Hand eintragen', 'Zum Beispiel, wenn du mit echten Würfeln wirfst.', 'data-a="padauf"') : '') +
+    (offen && party.digW ? o('', 'P', 'Pasch von Hand', party.digK ? 'Karten ziehen, ohne zu würfeln.' : 'P ins Feld und Kartenpunkte eintragen.', 'data-a="pasch"') : '') +
+    (offen ? o('bad', '0', 'Genullt', 'Die Runde von Hand als genullt eintragen.', 'data-a="nullen"' + (r.f.length ? '' : ' disabled')) : '') +
+    o('', '⌫', 'Letztes Feld löschen', 'Nimmt den letzten Eintrag in dieser Zeile zurück.', 'data-a="del"' + (r.f.length ? '' : ' disabled')) +
+    o('', '✎', 'Details und Korrektur', 'Punkte korrigieren, Runde doppelt, Punkte vorgeben.', 'data-a="detail" data-i="' + c + '"') +
+    o('', '‹', 'Vorige Runde ansehen', 'Wechselt die angezeigte Runde.', 'data-a="runde" data-i="' + (c - 1) + '"' + (c === 0 ? ' disabled' : '')) +
+    o('', '›', 'Nächste Runde ansehen', 'Wechselt die angezeigte Runde.', 'data-a="runde" data-i="' + (c + 1) + '"' + (c === RUNDEN - 1 ? ' disabled' : '')) +
+    o('', '↻', 'Neue Partie', 'Spieler, Würfel und Karten neu wählen.', 'data-a="new"') +
+    o('', '?', 'Regeln der App', 'Bedienung und Rechenweg.', 'data-a="tab" data-tab="regeln"') +
+    '</div><button class="abbr" data-a="dlgzu">Schließen</button>');
+}
+function jokerWahlDialog() {
+  return ov('<div class="dt">Joker</div><div class="ds">Je 1× pro Spiel. Den Wiederholungs-Joker vor dem Wurf ansagen.</div>' +
+    '<div class="jokers" style="margin-bottom:12px">' + jokerHtml() + '</div><button class="abbr" data-a="dlgzu">Schließen</button>');
+}
+function padDialog() {
+  return ov('<div class="dt">Zahl eintragen</div><div class="ds">Höheren Würfel antippen. Eule und neue Zahl? Die Zahl normal eintragen.</div>' + padHtml(R()) +
+    '<button class="abbr" data-a="dlgzu">Abbrechen</button>');
 }
 /* Hinweis nach automatischem Nullen: nichts ist endgültig, ↶ stellt die Runde vor dem Wurf wieder her */
 function genulltDialog(d) {
@@ -995,7 +1055,10 @@ let altGesamt = null, altRunde = null;
 function render(flip) {
   const app = document.getElementById('app');
   let screen = state.tab === 'regeln' ? regeln() : spiel();
-  app.innerHTML = kopf() + screen + tabs() + dialog();
+  const fenster = state.tab === 'spiel' && state.setupDone && !state.pendingNew ? spielFenster() : '';
+  app.innerHTML = kopf() + screen + fenster + tabs() + dialog();
+  const fe = app.querySelector('.fenster, .mini');
+  document.body.style.paddingBottom = fe ? 'calc(' + (fe.offsetHeight + 72) + 'px + env(safe-area-inset-bottom,0px))' : '';
   const g = gesamt(), rp = state.phase === 'play' ? punkte(R()) : null;
   if (flip !== false) {
     if (altGesamt !== null && g !== altGesamt) flipEl(document.getElementById('hdr-total'));
@@ -1010,8 +1073,9 @@ document.addEventListener('click', ev => {
   if (!b || b.disabled) return;
   const a = b.dataset.a, i = +b.dataset.i;
   if (a === 'ovzu') { if (ev.target === b && !b.dataset.fest) { state.dialog = null; if (state.pendingNew) state.pendingNew = false; render(false); } return; }
+  if (state.dialog && ['mehr', 'pad', 'jokerwahl'].includes(state.dialog.art) && b.closest('.dlg') && a !== 'dlgzu') state.dialog = null;
   if (a === 'tab') { state.tab = b.dataset.tab; speichern(); render(false); window.scrollTo(0, 0); }
-  else if (a === 'zumblatt') { state.tab = 'spiel'; render(false); const el = document.querySelector('.bl'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  else if (a === 'zumblatt') { state.tab = 'spiel'; state.panel = false; render(false); const el = document.querySelector('.bl'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   else if (a === 'num') zahlTippen(+b.dataset.n);
   else if (a === 'pasch') paschOeffnen();
   else if (a === 'del') letzteWeg();
@@ -1046,7 +1110,10 @@ document.addEventListener('click', ev => {
   else if (a === 'rleer') { merken(); state.rounds[state.dialog.i] = neueRunde(); state.dialog = null; speichern(); render(true); toast('Runde geleert.'); }
   else if (a === 'ww') weiterWahl(b.dataset.w);
   else if (a === 'wuerfeln') wuerfeln();
-  else if (a === 'pad') { state.zeigePad = !state.zeigePad; render(false); }
+  else if (a === 'panel') { state.panel = state.panel === false; speichern(); render(false); }
+  else if (a === 'mehr') { state.dialog = { art: 'mehr' }; render(false); }
+  else if (a === 'jokerwahl') { state.dialog = { art: 'jokerwahl' }; render(false); }
+  else if (a === 'padauf') { state.dialog = { art: 'pad' }; render(false); }
   else if (a === 'spieler') { spielerWechseln(i); speichern(); render(false); window.scrollTo(0, 0); }
   else if (a === 'kw') {
     const d = state.dialog, k = d.karten[+b.dataset.ix], c = KARTEN[k];

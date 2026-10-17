@@ -3,6 +3,11 @@
 Eine einzige `index.html`, läuft offline im Browser (Handy, Tablet, PC). Erweiterung des digitalen Wertungsblocks
 `eulen-wuerfelspiel`: Würfel, Karten und Spielblock lassen sich komplett in der App spielen.
 
+**Bedienung:** Im Vordergrund liegt das Spielfenster mit Würfeln, Joker, Aussteigen & sichern, Nächster Spieler, Zurück
+und Mehr. Das Spielblatt mit allen Runden und Zahlen liegt dahinter. Das Tabellen-Symbol im Spielfenster blendet das
+Fenster aus, „Zum Spiel“ blendet es wieder ein. Unter „Mehr“ stehen Zahl und Pasch von Hand, Genullt, Korrekturen und
+Neue Partie.
+
 **Beim Start der Partie wählst du:**
 - ein Spieler oder mehrere Spieler (2 bis 6) an einem Gerät
 - Würfel in der App oder echte Würfel
