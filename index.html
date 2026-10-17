@@ -37,7 +37,7 @@ button:disabled{cursor:not-allowed;}
   47%{transform:perspective(240px) rotateX(-88deg)}100%{transform:perspective(240px) rotateX(0)}}
 .flap-flip{animation:flapflip .34s ease-out;}
 @keyframes puls{0%,100%{box-shadow:0 0 0 0 rgba(47,111,237,.55)}50%{box-shadow:0 0 0 6px rgba(47,111,237,0)}}
-@media(prefers-reduced-motion:reduce){.flap-flip,.sc.next,.die.roll{animation:none!important;}*,*::before,*::after{transition:none!important;}}
+@media(prefers-reduced-motion:reduce){.flap-flip,.sc.next,.d12.roll{animation:none!important;}*,*::before,*::after{transition:none!important;}}
 
 /* ── Kopf ── */
 .kopf{position:sticky;top:0;z-index:20;background:var(--black);border-bottom:2px solid var(--pink);
@@ -242,14 +242,21 @@ button:disabled{cursor:not-allowed;}
 #nosleep-vid{position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;}
 
 /* ── Würfel, Karten, Spieler ── */
-.dice{display:flex;justify-content:center;gap:16px;margin:4px 0 10px;}
-.die{width:88px;height:88px;border-radius:20px;background:linear-gradient(145deg,#3a7bff,#1f4fc0);color:#fff;display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:40px;border:2px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.45);font-variant-numeric:tabular-nums;}
-.die svg{width:60px;height:60px;}
-.die.eule{background:linear-gradient(145deg,#0f8b8d,#0a5f66);border-color:var(--lime);}
-.die.roll{animation:wurf .7s ease-in-out;}
-@keyframes wurf{0%{transform:rotate(0) translateY(0)}20%{transform:rotate(-25deg) translateY(-18px)}40%{transform:rotate(20deg) translateY(0)}
-  60%{transform:rotate(-15deg) translateY(-10px)}80%{transform:rotate(10deg) translateY(0)}100%{transform:rotate(0)}}
+.dwrap{--a:30px;width:calc(var(--a)*2.8);height:calc(var(--a)*2.8);perspective:620px;display:flex;align-items:center;justify-content:center;}
+.d12{position:relative;width:0;height:0;transform-style:preserve-3d;}
+.d12.roll{animation:d12roll 1.1s cubic-bezier(.2,.7,.25,1) both;}
+@keyframes d12roll{from{transform:var(--von)}to{transform:var(--ziel)}}
+.fl{position:absolute;left:calc(var(--a)*-.809);top:calc(var(--a)*-.8507);width:calc(var(--a)*1.618);height:calc(var(--a)*1.5388);transform-origin:50% 55.3%;
+  clip-path:polygon(50% 0,100% 38.2%,80.9% 100%,19.1% 100%,0 38.2%);backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#e9f0ff;}
+.fl i{position:absolute;inset:0;clip-path:polygon(50% 0,100% 38.2%,80.9% 100%,19.1% 100%,0 38.2%);transform:scale(.9);transform-origin:50% 55.3%;background:linear-gradient(160deg,#3a7bff,#2358c9);}
+.fl.o i{background:linear-gradient(160deg,#5b94ff,#2f6fed);}
+.fl.l i{background:linear-gradient(160deg,#2f6fed,#1c47a8);}
+.fl.b i{background:linear-gradient(160deg,#2358c9,#173b8a);}
+.fl.eu i{background:linear-gradient(160deg,#12a3a5,#0a5f66);}
+.fl b{position:absolute;left:0;right:0;top:55.3%;transform:translateY(-50%);text-align:center;color:#fff;font-weight:800;font-size:calc(var(--a)*.62);line-height:1;
+  display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.35);}
+.fl b svg{width:calc(var(--a)*.95);height:calc(var(--a)*.95);}
+.dice{display:flex;justify-content:center;gap:10px;margin:4px 0 10px;}
 .kartenreihe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px;}
 .kart{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;border:2px solid var(--pink);background:var(--black);text-align:center;min-height:150px;}
 .kart:active{background:var(--pink-dim);}
@@ -287,9 +294,8 @@ button:disabled{cursor:not-allowed;}
 .fenster .sc.p small{font-size:10px;}
 .fenster .sz{height:20px;font-size:11px;}
 .fenster .hinweis{margin-top:6px;font-size:12px;line-height:1.4;}
-.fenster .dice{margin:8px 0;}
-.fenster .die{width:68px;height:68px;font-size:32px;border-radius:16px;}
-.fenster .die svg{width:46px;height:46px;}
+.fenster .dice{margin:6px 0;}
+.fenster .dwrap{--a:24px;}
 .fenster .pad button{height:46px;font-size:20px;}
 .fenster .btn{min-height:46px;font-size:13px;}
 .fenster .btn.gross{min-height:56px;font-size:16px;}
@@ -335,7 +341,7 @@ const JOKERZEICHEN = { sn: ')', zc: '2', ep: 'P' };
 
 /* ── Würfel: zwei W12, auf der 1 sitzt die Eule ── */
 const EULE_WERT = 1;
-const WURFDAUER = (typeof matchMedia === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches) ? 700 : 0;
+const WURFDAUER = (typeof matchMedia === 'function' && !matchMedia('(prefers-reduced-motion: reduce)').matches) ? 1100 : 0;
 function zufall(n) { try { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } catch (e) { return Math.floor(Math.random() * n); } }
 function mischen(a) { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = zufall(i + 1); [x[i], x[j]] = [x[j], x[i]]; } return x; }
 const wurfWert = (a, b) => (a === EULE_WERT && b === EULE_WERT ? 15 : Math.max(a, b));   // Karten-Wurf: höherer Würfel, zwei Eulen = 15
@@ -719,7 +725,7 @@ function spielFenster() {
   h += '<div class="hinweis">' + (zeigeWurf ? esc(w.text) : hinweisZeile(r, zuk)) + '</div>';
   if (offen) {
     if (party.digW) {
-      h += '<div class="dice">' + dieHtml(w ? w.a : null, rolling) + dieHtml(w ? w.b : null, rolling) + '</div>' +
+      h += '<div class="dice">' + dieHtml(w ? w.a : null, rolling, 0) + dieHtml(w ? w.b : null, rolling, 1) + '</div>' +
         '<div class="zeile2"><button class="btn pink gross" data-a="wuerfeln"' + (rolling ? ' disabled' : '') + '>Würfeln</button></div>';
     } else {
       h += '<div class="kopfz" style="margin-top:10px"><span class="titel">Höheren Würfel antippen</span><span class="klein">Eule + neue Zahl? Zahl normal eintragen.</span></div>' + padHtml(r) +
@@ -739,9 +745,29 @@ function spielFenster() {
 
 /* Digitale Würfel: zwei W12, die Eule sitzt auf der 1 */
 const EULE = '<svg viewBox="0 0 40 40" role="img" aria-label="Eule"><path d="M8 5 15 12h10l7-7v19c0 8-6 12-12 12S8 32 8 24Z" fill="#7ee0c3"/><circle cx="14.5" cy="19" r="4.6" fill="#fff"/><circle cx="25.5" cy="19" r="4.6" fill="#fff"/><circle cx="14.5" cy="19" r="2.1" fill="#0f1720"/><circle cx="25.5" cy="19" r="2.1" fill="#0f1720"/><path d="m20 22-2.6 5h5.2Z" fill="#f3b244"/></svg>';
-function dieHtml(x, rolling) {
-  return '<div class="die' + (rolling ? ' roll' : '') + (x === EULE_WERT && !rolling ? ' eule' : '') + '">' + (rolling || x == null ? '?' : x === EULE_WERT ? EULE : x) + '</div>';
+/* W12 als echter 3D-Körper: 12 Fünfecke. Die Winkel (th, ph, ps) sind rechnerisch geprüft: nur mit ps=36° bei den oberen
+   Flächen schließen sich alle 30 Kanten. Gegenüberliegende Flächen ergeben zusammen 13, die Eule sitzt auf der 1. */
+const W12 = (() => {
+  const E = 26.565, f = [{ n: 12, th: 0, ph: 90, ps: 0, g: 'o' }];
+  [2, 4, 6, 8, 10].forEach((n, k) => f.push({ n, th: 72 * k, ph: E, ps: 36, g: 'u' }));
+  [5, 3, 11, 9, 7].forEach((n, k) => f.push({ n, th: 36 + 72 * k, ph: -E, ps: 0, g: 'l' }));
+  f.push({ n: 1, th: 0, ph: -90, ps: 0, g: 'b' });
+  return f;
+})();
+const W12HTML = W12.map(f => '<div class="fl ' + f.g + (f.n === EULE_WERT ? ' eu' : '') + '" style="transform:rotateY(' + f.th + 'deg) rotateX(' + f.ph + 'deg) rotateZ(' + f.ps + 'deg) translateZ(calc(var(--a)*1.1135))"><i></i><b>' +
+  (f.n === EULE_WERT ? EULE : f.n) + '</b></div>').join('');
+const poseVon = x => { const f = W12.find(q => q.n === x); return f ? [-f.ps, -f.ph, -f.th] : [0, -24, 30]; };   // [Z, X, Y]: bringt Fläche x nach vorn
+const poseCss = (p, plus) => 'rotateZ(' + (p[0] + (plus ? plus[0] : 0)) + 'deg) rotateX(' + (p[1] + (plus ? plus[1] : 0)) + 'deg) rotateY(' + (p[2] + (plus ? plus[2] : 0)) + 'deg)';
+const letztePose = [poseVon(null), poseVon(null)];
+function dieHtml(x, anim, k) {
+  k = k || 0;
+  const ziel = poseVon(x), von = letztePose[k];
+  letztePose[k] = ziel;
+  const mehr = [720 + 360 * k, 1080 - 360 * k, 720 + 360 * (1 - k)];   // volle Drehungen, ändern die Endlage nicht
+  const stil = 'transform:' + poseCss(ziel) + (anim ? ';--von:' + poseCss(von) + ';--ziel:' + poseCss(ziel, mehr) : '');
+  return '<div class="dwrap"><div class="d12' + (anim ? ' roll' : '') + '" style="' + stil + '" role="img" aria-label="' + (x == null ? 'Würfel' : x === EULE_WERT ? 'Eule' : x) + '">' + W12HTML + '</div></div>';
 }
+
 /* Mehrere Spieler: Leiste oben, Rangliste am Ende */
 function spielerLeiste() {
   if (!mehrere()) return '';
@@ -886,7 +912,7 @@ function padDialog() {
 function genulltDialog(d) {
   const r = R(), w = state.wurf;
   return ov('<div class="dt">Genullt</div>' +
-    (w ? '<div class="dice" style="margin-top:8px">' + dieHtml(w.a) + dieHtml(w.b) + '</div>' : '') +
+    (w ? '<div class="dice" style="margin-top:8px">' + dieHtml(w.a, !!w.anim, 0) + dieHtml(w.b, !!w.anim, 1) + '</div>' : '') +
     '<div class="ds">Die ' + d.n + ' steht schon in der Zeile, und es war weder eine Eule dabei noch ein Wiederholungs-Joker angesagt. ' +
     (r.klammer === null ? 'Die Runde zählt 0 Punkte, du setzt aus.' : 'Die Punkte bis zur Klammer ) bleiben dir, du setzt aus.') + '</div>' +
     '<div class="opts"><button class="opt bad" data-a="undo"><span class="ic" style="color:var(--bad)">↶</span><div><div class="nm">Fehler? Rückgängig</div><div class="bs">Stellt die Runde vor diesem Wurf wieder her.</div></div></button></div>' +
@@ -943,7 +969,7 @@ function paschKartenDialog(d) {
     if (!w) inh = '<div class="ds"><b>' + esc(c.name) + ':</b> ' + esc(c.text) + '.</div><button class="btn pink gross" style="width:100%;margin-bottom:6px" data-a="kwurf">Würfeln</button>';
     else {
       const wv = wurfWert(w.a, w.b), v = wv * c.mal;
-      inh = '<div class="dice">' + dieHtml(w.a) + dieHtml(w.b) + '</div><div class="ds">' + (w.a === EULE_WERT && w.b === EULE_WERT ? 'Zwei Eulen: Eulen-Pasch, Wert 15' : 'Höherer Würfel: ' + wv) + (c.mal === 2 ? ', verdoppelt: ' + v : '') + '.</div>' +
+      inh = '<div class="dice">' + dieHtml(w.a, !!w.anim, 0) + dieHtml(w.b, !!w.anim, 1) + '</div><div class="ds">' + (w.a === EULE_WERT && w.b === EULE_WERT ? 'Zwei Eulen: Eulen-Pasch, Wert 15' : 'Höherer Würfel: ' + wv) + (c.mal === 2 ? ', verdoppelt: ' + v : '') + '.</div>' +
         '<button class="btn gruen gross" style="width:100%;margin-bottom:6px" data-a="kok">Eintragen: ' + v + ' Punkte</button>';
     }
     return ov(kopfz + inh + '<button class="abbr" data-a="pback">Zurück</button>');
@@ -1115,7 +1141,7 @@ document.addEventListener('click', ev => {
     if (c.mal) { d.schritt = 1; d.mal = c.mal; d.wahl = k; render(false); }
     else paschFertig(c.v || 0, c.fx);
   }
-  else if (a === 'kwurf') { const d = state.dialog; if (!d.wurf) d.wurf = { a: zufall(12) + 1, b: zufall(12) + 1 }; render(false); }
+  else if (a === 'kwurf') { const d = state.dialog; if (!d.wurf) d.wurf = { a: zufall(12) + 1, b: zufall(12) + 1, anim: WURFDAUER > 0 }; render(false); d.wurf.anim = false; }
   else if (a === 'kok') { const d = state.dialog; if (d.wurf) paschFertig(wurfWert(d.wurf.a, d.wurf.b) * d.mal); }
   else if (a === 'su-m') { setupLesen(); state.setup.modus = b.dataset.w; render(false); }
   else if (a === 'su-n') { setupLesen(); state.setup.n = Math.max(2, Math.min(6, state.setup.n + (+b.dataset.d))); render(false); }

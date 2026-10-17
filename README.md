@@ -13,7 +13,8 @@ Neue Partie.
 - Würfel in der App oder echte Würfel
 - Karten in der App oder echte Karten
 
-**Würfel:** zwei W12, auf der 1 sitzt die Eule. Es zählt der höhere Würfel, die Eule gilt als 1.
+**Würfel:** zwei W12, als 3D-Zwölfflächner dargestellt, die beim Würfeln taumeln und auf der gewürfelten Zahl landen
+(gegenüberliegende Flächen ergeben 13, die Eule sitzt auf der 1). Es zählt der höhere Würfel, die Eule gilt als 1.
 - Eule und eine Zahl, die schon in der Zeile steht: Die Eule rettet, nichts wird eingetragen, du wirfst nochmal.
 - Eule und neue Zahl: Die Zahl wird normal eingetragen.
 - Zweimal dieselbe Zahl: Pasch.
