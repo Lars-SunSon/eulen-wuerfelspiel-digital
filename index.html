@@ -997,19 +997,19 @@ function paschKartenDialog(d) {
     '<button class="abbr" data-a="dlgzu">Abbrechen</button>');
 }
 function paschDialog(d) {
-  if (d.karten && !(d.schritt === 1 && !party.digW)) return paschKartenDialog(d);
+  if (d.karten && d.schritt !== 1) return paschKartenDialog(d);
   const r = R();
   const kopfz = '<div class="dt">' + (d.extra ? 'Pasch-Joker' : 'Pasch') + ' · ' + feldName(r.f.length) + '</div>';
-  if (d.schritt === 1 && party.digW) {          // echte Karten, digitale Würfel: Wurf der Karte in der App würfeln
-    const mal = d.mal === 2 ? 2 : 1, w = d.wurf;
-    let inh = '<div class="ds">' + (mal === 2 ? 'Die Karte verlangt einen neuen Wurf, der Wert zählt doppelt.' : 'Die Karte verlangt einen neuen Wurf, der Wert wird eingetragen.') + '</div>';
+  if (d.schritt === 1 && !d.hand) {             // Karte verlangt einen Wurf: immer in der App würfeln, von Hand nur als Ausweg
+    const mal = d.mal === 2 ? 2 : 1, w = d.wurf, kc = d.karten && KARTEN[d.wahl];
+    let inh = (kc ? '<div class="ds"><b>' + esc(kc.name) + ':</b> ' + esc(kc.text) + '.</div>' : '') + '<div class="ds">' + (mal === 2 ? 'Die Karte verlangt einen neuen Wurf, der Wert zählt doppelt.' : 'Die Karte verlangt einen neuen Wurf, der Wert wird eingetragen.') + '</div>';
     if (!w) inh += '<div class="dice" style="margin-bottom:12px">' + dieHtml(null, false, 0) + dieHtml(null, false, 1) + '</div><button class="btn pink gross" style="width:100%;margin-bottom:6px" data-a="kwurf">Würfeln</button>';
     else {
       const wv = wurfWert(w.a, w.b), v = wv * mal;
       inh += '<div class="dice">' + dieHtml(w.a, !!w.anim, 0) + dieHtml(w.b, !!w.anim, 1) + '</div><div class="ds">' + (w.a === EULE_WERT && w.b === EULE_WERT ? 'Zwei Eulen: Eulen-Pasch, Wert 15' : 'Höherer Würfel: ' + wv) + (mal === 2 ? ', verdoppelt: ' + v : '') + '.</div>' +
         '<button class="btn gruen gross" style="width:100%;margin-bottom:6px" data-a="kok">Eintragen: ' + v + ' Punkte</button>';
     }
-    return ov(kopfz + inh + '<button class="abbr" data-a="pback">Zurück</button>');
+    return ov(kopfz + inh + '<button class="abbr" data-a="phand" data-h="1">Zahl von Hand eintragen</button><button class="abbr" data-a="pback">Zurück</button>');
   }
   if (d.schritt === 1) {
     const mal = d.mal === 2 ? 2 : 1;
@@ -1018,7 +1018,7 @@ function paschDialog(d) {
     pad += '</div>';
     return ov(kopfz + '<div class="ds">' + (mal === 2 ? 'Höheren Würfel des Wurfs antippen, die App verdoppelt den Wert.' : 'Welcher Wert steht auf dem Wurf der Karte (höherer Würfel)?') + '</div>' + pad +
       '<button class="btn pink" style="width:100%;margin-bottom:6px" data-a="pv" data-v="' + (15 * mal) + '">Eulen-Pasch (15' + (mal === 2 ? ', verdoppelt 30' : '') + ')</button>' +
-      '<button class="abbr" data-a="pback">Zurück</button>');
+      '<button class="abbr" data-a="phand" data-h="0">Lieber in der App würfeln</button><button class="abbr" data-a="pback">Zurück</button>');
   }
   const o = (cls, ic, nm, bs, a) => '<button class="opt ' + cls + '" ' + a + '><span class="ic">' + ic + '</span><div><div class="nm">' + nm + '</div><div class="bs">' + bs + '</div></div></button>';
   return ov(kopfz +
@@ -1145,6 +1145,7 @@ document.addEventListener('click', ev => {
     else paschFertig(+b.dataset.v, b.dataset.fx);
   }
   else if (a === 'pv') paschFertig(+b.dataset.v);
+  else if (a === 'phand') { state.dialog.hand = b.dataset.h === '1'; render(false); }
   else if (a === 'pback') { state.dialog.schritt = 0; render(false); }
   else if (a === 'bj') bonusJokerSetzen(b.dataset.t);
   else if (a === 'jset') { const k = state.dialog.i; state.dialog = null; jokerEinsetzen(k); }
