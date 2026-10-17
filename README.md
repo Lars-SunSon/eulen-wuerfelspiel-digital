@@ -30,6 +30,15 @@ die einen neuen Wurf verlangen, würfeln direkt in der App.
 - Der Eulen-Pasch zieht `EULENPASCHKARTEN = 3` Karten, jeder andere Pasch `PASCHKARTEN = 1`.
 - Zusammensetzung und Wirkung des Decks (`KARTEN`, `DECK`) sind frei erfunden.
 
+**Geist-Gegner (nur Einzelspiel):** Beim Start wählst du Aus, Vorsichtig, Normal oder Riskant. Der Geist würfelt seine 10 Runden
+nach festen Regeln (er sichert, sobald die Gefahr zu nullen über einer Grenze liegt) und nutzt dieselben Würfel- und Kartenregeln,
+aber keine Joker. Im Spielfenster siehst du seinen Stand nach deinen beendeten Runden. Am Ende gewinnt, wer nach gleich vielen
+Runden mehr Punkte hat (bei Gleichstand: weniger Nullrunden). Die Schwierigkeit ist per Simulation geprüft: Vorsichtig im Schnitt
+etwa 145 Punkte, Normal etwa 200, Riskant etwa 225 über 10 Runden, Riskant mit der größten Schwankung.
+
+**Bestenliste:** Jede beendete Einzelpartie wird auf dem Gerät gespeichert (Top 50, `hdp2_best`). Sortiert nach Punkten, bei
+Gleichstand nach weniger Nullrunden. Sie ist im Endstand und unter „Mehr“ zu sehen und lässt sich löschen.
+
 **Mehrere Spieler:** Oben tippst du einen Spieler an. „Nächster Spieler“ springt zum nächsten, der noch spielt. Sind alle
 fertig, geht es für alle in die nächste Runde. Ab 222 Punkten wird die Runde für alle zu Ende gespielt, am Ende gibt es eine
 Rangliste (bei Gleichstand gewinnt, wer seltener genullt hat).

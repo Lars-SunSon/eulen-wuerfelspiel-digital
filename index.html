@@ -113,6 +113,10 @@ button:disabled{cursor:not-allowed;}
 .strip.null .sc.fl:not(.keep)::before{content:'';position:absolute;left:8%;right:8%;top:50%;height:3px;background:var(--bad);transform:rotate(-14deg);border-radius:2px;}
 .hinweis{font-size:12.5px;line-height:1.45;color:var(--text2);margin-top:10px;}
 .hinweis b{color:#fff;}
+.geist{font-size:12.5px;color:var(--text2);margin-top:8px;line-height:1.4;}.geist b{color:#fff;}.geist .plus{color:var(--lime);font-weight:800;}.geist .minus{color:var(--bad);font-weight:800;}.geist small{font-size:11px;}
+.geistend{margin-top:12px;padding:10px 12px;border-radius:var(--rs);border:2px solid var(--edge);text-align:left;}.geistend>b{font-size:15px;}.geistend.sieg{border-color:var(--lime);}.geistend.sieg>b{color:var(--lime);}.geistend.niederlage{border-color:var(--bad);}.geistend.niederlage>b{color:var(--bad);}
+.blist{margin:8px 0;max-height:46vh;overflow-y:auto;}.brow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--edge);}.brow.me{background:var(--pink-dim);border-radius:8px;}
+.brow .bp{width:24px;text-align:center;font-weight:800;color:var(--text2);}.brow .bn{flex:1;min-width:0;font-weight:700;font-size:14px;}.brow .bn small{display:block;font-size:11px;color:var(--text2);font-weight:500;}.brow>b{font-size:18px;font-variant-numeric:tabular-nums;}
 
 /* ── Zahlenfeld ── */
 .pad{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;}
@@ -362,6 +366,39 @@ const DECK = { f5: 5, f7: 4, f10: 3, w2: 3, w1: 4, rx: 2, bs: 2, bz: 2, l0: 5 };
 const PASCHKARTEN = 1, EULENPASCHKARTEN = 3;      // normaler Pasch: 1 Karte. Zwei Eulen: 3 Karten ziehen, eine davon wählen
 function neuesDeck() { const d = []; Object.keys(DECK).forEach(k => { for (let i = 0; i < DECK[k]; i++) d.push(k); }); return d; }
 
+/* ── Geist-Gegner (nur Einzelspiel): simulierter Spieler mit festen Regeln. Seine 10 Runden werden beim Start ausgewürfelt ── */
+const GEIST = { 1: { name: 'Vorsichtig', risiko: 0.10 }, 2: { name: 'Normal', risiko: 0.18 }, 3: { name: 'Riskant', risiko: 0.26 } };
+function geistNullRisiko(zahlen) {              // Wahrscheinlichkeit, dass der nächste Wurf nullt (doppelte Zahl, keine Eule, kein Pasch)
+  let c = 0;
+  for (let a = 1; a <= 12; a++) for (let b = 1; b <= 12; b++) if (a !== b && a !== EULE_WERT && b !== EULE_WERT && zahlen.includes(Math.max(a, b))) c++;
+  return c / 144;
+}
+function geistKarte(basis) {
+  const pool = neuesDeck(), k = pool[zufall(pool.length)], c = KARTEN[k];
+  if (c.mal) return { v: wurfWert(zufall(12) + 1, zufall(12) + 1) * c.mal, dop: false };
+  if (c.fx === 'doppelt') return { v: 0, dop: true, schaetz: basis };
+  return { v: c.v || 0, dop: false };
+}
+function geistRunde(stufe) {
+  const lim = GEIST[stufe].risiko, zahlen = []; let felder = 0, pv = 0, dop = false;
+  for (let g = 0; g < 300 && felder < FELDER; g++) {
+    if (felder > 0 && geistNullRisiko(zahlen) > lim) break;
+    const a = zufall(12) + 1, b = zufall(12) + 1, basis = zahlen.reduce((t, x) => t + x, 0) + pv;
+    if (a === b) {                                // Pasch: 1 Karte, Eulen-Pasch 3 Karten und die beste wählen
+      const kk = Array.from({ length: a === EULE_WERT ? EULENPASCHKARTEN : PASCHKARTEN }, () => geistKarte(basis));
+      kk.sort((x, y) => (y.schaetz || y.v) - (x.schaetz || x.v));
+      pv += kk[0].v; if (kk[0].dop) dop = true; felder++; continue;
+    }
+    const n = Math.max(a, b);
+    if (zahlen.includes(n)) { if (a === EULE_WERT || b === EULE_WERT) continue; return { p: 0, status: 'genullt', felder }; }   // Eule rettet
+    zahlen.push(n); felder++;
+  }
+  let p = zahlen.reduce((t, x) => t + x, 0) + pv + BONUS[Math.max(0, Math.min(felder - 1, 6))];
+  if (dop) p *= 2;
+  return { p, status: 'gesichert', felder };
+}
+const geistErzeugen = stufe => (stufe > 0 ? { stufe, runden: Array.from({ length: RUNDEN }, () => geistRunde(stufe)) } : null);
+
 const neueRunde = () => ({ f: [], klammer: null, status: 'offen', zc: false, doppelt: false, korr: 0, override: null });
 const neueJoker = () => [{ typ: 'sn', used: null }, { typ: 'zc', used: null }, { typ: 'ep', used: null }, { typ: null, used: null }, { typ: null, used: null }];
 const neuerStand = () => ({ v: 3, setupDone: false, name: '', cur: 0, tab: 'spiel', phase: 'play',
@@ -373,7 +410,7 @@ let verlauf = [];
 const BLATTFELDER = ['name', 'cur', 'phase', 'rounds', 'joker'];
 const kopie = o => JSON.parse(JSON.stringify(o));
 const neuesBlatt = name => ({ name, cur: 0, phase: 'play', rounds: Array.from({ length: RUNDEN }, neueRunde), joker: neueJoker() });
-const neuePartie = (namen, digW, digK) => ({ sheets: namen.map(neuesBlatt), active: 0, digW, digK, zielAktiv: false, deck: mischen(neuesDeck()), ablage: [] });
+const neuePartie = (namen, digW, digK, geist) => ({ sheets: namen.map(neuesBlatt), active: 0, digW, digK, zielAktiv: false, deck: mischen(neuesDeck()), ablage: [], geistStufe: geist == null ? null : geist, geist: geistErzeugen(geist || 0), pid: Math.random().toString(36).slice(2) + Date.now().toString(36) });
 let party = neuePartie([''], true, true);
 const mehrere = () => party.sheets.length > 1;
 function sync() { const o = {}; BLATTFELDER.forEach(k => { o[k] = state[k]; }); party.sheets[party.active] = kopie(o); }
@@ -711,6 +748,59 @@ function jokerHtml() {
       (j.used === null ? JOKERKURZ[j.typ] : (zus ? 'scharf!' : 'Runde ' + (j.used + 1))) + '</span></button>';
   }).join('');
 }
+function geistStand() {
+  if (mehrere() || !party.geist) return null;
+  const fertig = state.rounds.filter(r => r.status !== 'offen'), kd = fertig.length;
+  const g = party.geist.runden.slice(0, kd), gp = g.reduce((t, x) => t + x.p, 0), gn = g.filter(x => x.status === 'genullt').length;
+  const du = state.phase === 'done' ? gesamt() : fertig.reduce((t, r) => t + punkte(r), 0), dn = nullrunden();
+  const erg = du > gp ? 'sieg' : du < gp ? 'niederlage' : dn < gn ? 'sieg' : dn > gn ? 'niederlage' : 'remis';
+  return { kd, gp, gn, du, dn, erg, name: GEIST[party.geist.stufe].name, runden: g };
+}
+function geistZeile() {
+  const g = geistStand(); if (!g) return '';
+  if (!g.kd) return '<div class="geist">Geist (' + g.name + ') wartet auf deine erste Runde.</div>';
+  const d = g.du - g.gp;
+  return '<div class="geist">Geist (' + g.name + '): <b>' + fmt(g.gp) + '</b> · Du: <b>' + fmt(g.du) + '</b> <span class="' + (d > 0 ? 'plus' : d < 0 ? 'minus' : '') + '">' + (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d) + '</span> <small>nach Runde ' + g.kd + '</small></div>';
+}
+function geistEnde() {
+  const g = geistStand(); if (!g) return '';
+  const t = { sieg: 'Du schlägst den Geist!', niederlage: 'Der Geist gewinnt diesmal.', remis: 'Unentschieden gegen den Geist.' }[g.erg];
+  return '<div class="geistend ' + g.erg + '"><b>' + t + '</b><div class="klein">Geist (' + g.name + ') nach ' + g.kd + ' Runden: <b>' + fmt(g.gp) + '</b>, ' + g.gn + '× genullt · Du: <b>' + fmt(g.du) + '</b>, ' + g.dn + '× genullt</div>' +
+    '<div class="klein" style="margin-top:4px">Seine Runden: ' + g.runden.map((x, i) => (i + 1) + ': ' + (x.status === 'genullt' ? '0' : x.p)).join(' · ') + '</div></div>';
+}
+const BESTEN = 'hdp2_best';
+function bestLaden() { try { const l = JSON.parse(localStorage.getItem(BESTEN) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+function bestSpeichern(l) { try { localStorage.setItem(BESTEN, JSON.stringify(l)); } catch (e) {} }
+function bestErfassen() {                       // beendete Einzelpartie in die Bestenliste (ein Eintrag je Partie)
+  if (state.phase !== 'done' || mehrere() || !state.setupDone) return;
+  const p = gesamt(), n = nullrunden(), sig = p + '|' + n; if (party.erfasst === sig) return;
+  if (!party.pid) party.pid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const gs = geistStand();
+  const e = { id: party.pid, t: Date.now(), name: state.name || '', p, n, r: state.rounds.filter(r => r.status !== 'offen').length, g: gs ? party.geist.stufe : 0, e: gs ? gs.erg : null };
+  let l = bestLaden(); const i = l.findIndex(x => x.id === e.id);
+  if (i >= 0) { e.t = l[i].t; l[i] = e; } else l.push(e);
+  l.sort((a, b) => b.p - a.p || a.n - b.n || b.t - a.t); l = l.slice(0, 50); bestSpeichern(l);
+  party.erfasst = sig; party.platz = l.findIndex(x => x.id === e.id) + 1; party.bestN = l.length;
+  try { localStorage.setItem(PARTEI, JSON.stringify(party)); } catch (er) {}
+}
+function bestenBlock() {
+  if (mehrere()) return '';
+  const pl = party.platz;
+  return '<p style="margin-top:10px">' + (pl === 1 && party.bestN > 1 ? '<b style="color:var(--lime)">Neuer Rekord!</b> ' : '') + (pl ? 'Platz <b>' + pl + '</b> von ' + party.bestN + ' in deiner Bestenliste.' : 'Diesmal nicht in den Top 50.') + '</p>' +
+    '<div class="zeile2" style="margin-top:8px"><button class="btn still" data-a="bestauf">Bestenliste ansehen</button></div>';
+}
+function bestDialog(d) {
+  const l = bestLaden(), top = l.slice(0, 10), ERG = { sieg: 'Sieg', niederlage: 'Niederlage', remis: 'Remis' };
+  let h = '<div class="dt">Bestenliste</div><div class="ds">Deine besten Einzelpartien auf diesem Gerät. Bei gleichen Punkten gewinnt, wer seltener genullt hat.</div>';
+  if (!top.length) h += '<p class="klein" style="text-align:center;margin:12px 0">Noch keine beendete Einzelpartie.</p>';
+  else h += '<div class="blist">' + top.map((x, i) => {
+    const dt = new Date(x.t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    return '<div class="brow' + (x.id === party.pid ? ' me' : '') + '"><span class="bp">' + (i + 1) + '</span><span class="bn">' + esc(x.name || 'Spieler') + '<small>' + dt + ' · ' + x.r + ' Runden · ' + x.n + '× genullt' + (x.g ? ' · Geist ' + GEIST[x.g].name + (x.e ? ': ' + ERG[x.e] : '') : '') + '</small></span><b>' + fmt(x.p) + '</b></div>';
+  }).join('') + '</div>';
+  if (l.length && !d.frage) h += '<button class="abbr" data-a="bestdel">Liste löschen</button>';
+  if (d.frage) h += '<p class="klein" style="text-align:center;margin:8px 0">Wirklich alle Einträge löschen?</p><div class="zeile2"><button class="btn rand" data-a="bestdel2">Ja, löschen</button><button class="btn still" data-a="bestauf">Nein</button></div>';
+  return ov(h + '<button class="btn pink gross" style="width:100%;margin-top:8px" data-a="dlgzu">Schließen</button>');
+}
 function spielFenster() {
   if (state.phase !== 'play') return '';
   const r = R(), d = detail(r), c = state.cur, offen = r.status === 'offen', zuk = istZukunft(c);
@@ -720,6 +810,7 @@ function spielFenster() {
   let h = '<div class="fenster"><div class="fkopf"><div class="fname"><b>' + (mehrere() ? esc(state.name) : 'Deine Runde') + '</b><small>Runde ' + (c + 1) + ' von ' + RUNDEN + ' · ' + st + '</small></div>' +
     '<div class="fz"><span>Runde</span><b id="rt-val">' + (benutzt(r) ? fmt(d.punkte) : '–') + '</b></div><div class="fz"><span>Gesamt</span><b>' + fmt(gesamt()) + '</b></div>' +
     '<button class="ikn" data-a="panel" title="Spielblatt anzeigen" aria-label="Spielblatt anzeigen"><svg viewBox="0 0 24 24">' + ICON.blatt + '</svg></button></div>';
+  h += geistZeile();
   h += zeileGross(r, zuk);
   const zeigeWurf = party.digW && w && w.text && offen && !r.zc && !zuk;
   h += '<div class="hinweis">' + (zeigeWurf ? esc(w.text) : hinweisZeile(r, zuk)) + '</div>';
@@ -845,6 +936,7 @@ function endstand() {
     '<div class="flap" id="rt-val" style="display:inline-block;font-size:54px;margin:16px 0;padding:6px 30px">' + fmt(gesamt()) + '</div>' +
     '<p class="klein">Genullte Runden: <b>' + nullrunden() + '</b> · Joker eingesetzt: <b>' + state.joker.filter(j => j.used !== null).length + '</b> von ' + state.joker.filter(j => j.typ).length + '</p>' +
     '<p class="klein" style="margin-top:8px">Bei Gleichstand gewinnt, wer seltener genullt hat. Dein Blatt siehst du unten.</p>' +
+    geistEnde() + bestenBlock() +
     '<div class="zeile2" style="margin-top:14px">' + (!alleRundenGespielt() && (mehrere() || gesamt() < ZIEL) ? '<button class="btn still" data-a="weiterspielen">Doch weiterspielen</button>' : '') + '<button class="btn pink" data-a="new">Neues Spiel</button></div></div>' +
     (mehrere() ? rangliste() : '') + blatt() + '</div>';
 }
@@ -898,6 +990,7 @@ function dialog() {
   if (d.art === 'mehr') return mehrDialog();
   if (d.art === 'jokerwahl') return jokerWahlDialog();
   if (d.art === 'pad') return padDialog();
+  if (d.art === 'best') return bestDialog(d);
   return '';
 }
 /* Pop-ups zum Spielfenster */
@@ -912,6 +1005,7 @@ function mehrDialog() {
     o('', '✎', 'Details und Korrektur', 'Punkte korrigieren, Runde doppelt, Punkte vorgeben.', 'data-a="detail" data-i="' + c + '"') +
     o('', '‹', 'Vorige Runde ansehen', 'Wechselt die angezeigte Runde.', 'data-a="runde" data-i="' + (c - 1) + '"' + (c === 0 ? ' disabled' : '')) +
     o('', '›', 'Nächste Runde ansehen', 'Wechselt die angezeigte Runde.', 'data-a="runde" data-i="' + (c + 1) + '"' + (c === RUNDEN - 1 ? ' disabled' : '')) +
+    o('', '★', 'Bestenliste', 'Deine besten Einzelpartien auf diesem Gerät.', 'data-a="bestauf"') +
     o('', '↻', 'Neue Partie', 'Spieler, Würfel und Karten neu wählen.', 'data-a="new"') +
     o('', '?', 'Regeln der App', 'Bedienung und Rechenweg.', 'data-a="tab" data-tab="regeln"') +
     '</div><button class="abbr" data-a="dlgzu">Schließen</button>');
@@ -936,7 +1030,7 @@ function genulltDialog(d) {
     '<p class="klein" style="text-align:center;margin-top:10px">Auch später möglich: ↶ oben oder „Wieder öffnen“.</p>');
 }
 function ov(inh, schliessbar) { return '<div class="ov" data-a="ovzu"' + (schliessbar === false ? ' data-fest="1"' : '') + '><div class="dlg">' + inh + '</div></div>'; }
-const defaultSetup = () => ({ modus: party.sheets.length > 1 ? 'multi' : 'solo', n: Math.max(2, party.sheets.length), namen: party.sheets.map(s => s.name), digW: party.digW, digK: party.digK });
+const defaultSetup = () => ({ modus: party.sheets.length > 1 ? 'multi' : 'solo', n: Math.max(2, party.sheets.length), namen: party.sheets.map(s => s.name), digW: party.digW, digK: party.digK, geist: party.geistStufe == null ? 2 : party.geistStufe });
 function setupLesen() {                           // Namensfelder vor jedem Neuzeichnen sichern
   const su = state.setup; if (!su) return;
   if (su.modus === 'solo') { const e = document.getElementById('name-in'); if (e) su.namen[0] = e.value; }
@@ -957,6 +1051,8 @@ function setupDialog() {
     '<div class="wahl"><button data-a="su-m" data-w="solo" class="' + (su.modus === 'solo' ? 'an' : '') + '">Ein Spieler</button><button data-a="su-m" data-w="multi" class="' + (su.modus === 'multi' ? 'an' : '') + '">Mehrere Spieler</button></div>' + namen +
     '<div class="step"><div class="l"><b>Würfel</b><small>2 × W12, Eule statt 1</small></div><div class="s">' + sw('su-w', '1', su.digW, 'App') + sw('su-w', '0', !su.digW, 'Echt') + '</div></div>' +
     '<div class="step"><div class="l"><b>Karten</b><small>Eigenes Deck der App</small></div><div class="s">' + sw('su-k', '1', su.digK, 'App') + sw('su-k', '0', !su.digK, 'Echt') + '</div></div>' +
+    (su.modus === 'solo' ? '<div class="step" style="display:block"><b style="font-size:14px;font-weight:700">Geist-Gegner</b><small style="display:block;font-size:11.5px;color:var(--text2);margin:2px 0 8px">Ein simulierter Spieler tritt gegen dich an</small><div class="wahl" style="margin:0">' +
+      [[0, 'Aus'], [1, 'Vorsichtig'], [2, 'Normal'], [3, 'Riskant']].map(x => '<button data-a="su-g" data-w="' + x[0] + '" class="' + (su.geist === x[0] ? 'an' : '') + '" style="font-size:12px;padding:0 2px">' + x[1] + '</button>').join('') + '</div></div>' : '') +
     '<button class="btn pink gross" style="width:100%;margin-top:14px" data-a="setup">' + (state.setupDone ? 'Partie starten' : 'Los geht’s') + '</button>' +
     (state.setupDone ? '<button class="abbr" data-a="setup-cancel">Abbrechen, Partie fortsetzen</button>' : '') +
     '<p class="klein" style="text-align:center;margin-top:12px">Dein Spielstand bleibt auf diesem Gerät gespeichert.</p>', false);
@@ -1102,6 +1198,7 @@ function weiterDialog() {
 let altGesamt = null, altRunde = null;
 function render(flip) {
   const app = document.getElementById('app');
+  bestErfassen();
   let screen = state.tab === 'regeln' ? regeln() : spiel();
   const fenster = state.tab === 'spiel' && state.setupDone && !state.pendingNew ? spielFenster() : '';
   app.innerHTML = kopf() + screen + fenster + tabs() + dialog();
@@ -1163,6 +1260,9 @@ document.addEventListener('click', ev => {
   else if (a === 'panel') { state.panel = state.panel === false; speichern(); render(false); }
   else if (a === 'mehr') { state.dialog = { art: 'mehr' }; render(false); }
   else if (a === 'jokerwahl') { state.dialog = { art: 'jokerwahl' }; render(false); }
+  else if (a === 'bestauf') { state.dialog = { art: 'best' }; render(false); }
+  else if (a === 'bestdel') { state.dialog = { art: 'best', frage: true }; render(false); }
+  else if (a === 'bestdel2') { bestSpeichern([]); state.dialog = { art: 'best' }; render(false); }
   else if (a === 'padauf') { state.dialog = { art: 'pad' }; render(false); }
   else if (a === 'spieler') { spielerWechseln(i); speichern(); render(false); window.scrollTo(0, 0); }
   else if (a === 'kw') {
@@ -1175,6 +1275,7 @@ document.addEventListener('click', ev => {
   else if (a === 'su-m') { setupLesen(); state.setup.modus = b.dataset.w; render(false); }
   else if (a === 'su-n') { setupLesen(); state.setup.n = Math.max(2, Math.min(6, state.setup.n + (+b.dataset.d))); render(false); }
   else if (a === 'su-w') { setupLesen(); state.setup.digW = b.dataset.w === '1'; render(false); }
+  else if (a === 'su-g') { setupLesen(); state.setup.geist = +b.dataset.w; render(false); }
   else if (a === 'su-k') { setupLesen(); state.setup.digK = b.dataset.w === '1'; render(false); }
   else if (a === 'zsehen') { state.dialog = null; render(false); window.scrollTo(0, 0); }
   else if (a === 'znew') { state.dialog = null; state.setup = defaultSetup(); state.pendingNew = true; render(false); }
@@ -1188,7 +1289,7 @@ document.addEventListener('click', ev => {
     const su = state.setup || defaultSetup(), n = su.modus === 'multi' ? su.n : 1;
     const namen = Array.from({ length: n }, (_, k) => (su.namen[k] || '').trim() || (n > 1 ? 'Spieler ' + (k + 1) : ''));
     if (state.setupDone) merken();
-    party = neuePartie(namen, su.digW, su.digK);
+    party = neuePartie(namen, su.digW, su.digK, n === 1 ? (su.geist || 0) : 0);
     state = { ...neuerStand(), setupDone: true, ...kopie(party.sheets[0]) };
     speichern(); hideToast(); render(false); window.scrollTo(0, 0);
   }
