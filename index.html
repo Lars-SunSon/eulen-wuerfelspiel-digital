@@ -324,7 +324,7 @@ const KARTEN = {
   l0: { name: 'Leerer Zug', sym: '–', text: 'Keine Punkte, keine Wirkung', v: 0 }
 };
 const DECK = { f5: 5, f7: 4, f10: 3, w2: 3, w1: 4, rx: 2, bs: 2, bz: 2, l0: 5 };   // 30 Karten
-const PASCHKARTEN = 3;                            // bei einem Pasch: so viele Karten ziehen, eine davon wählen
+const PASCHKARTEN = 1, EULENPASCHKARTEN = 3;      // normaler Pasch: 1 Karte. Zwei Eulen: 3 Karten ziehen, eine davon wählen
 function neuesDeck() { const d = []; Object.keys(DECK).forEach(k => { for (let i = 0; i < DECK[k]; i++) d.push(k); }); return d; }
 
 const neueRunde = () => ({ f: [], klammer: null, status: 'offen', zc: false, doppelt: false, korr: 0, override: null });
@@ -493,15 +493,15 @@ function bonusJokerSetzen(typ) {
 }
 /* Karten ziehen: Stapel mischen (kein Vorgucken durch Abbrechen), die obersten Karten zeigen.
    Verbraucht werden sie erst in paschFertig. Ist der Stapel zu klein, wird der Ablagestapel eingemischt. */
-function kartenZiehen() {
-  if (party.deck.length < PASCHKARTEN) { party.deck = mischen(party.deck.concat(party.ablage)); party.ablage = []; }
+function kartenZiehen(n) {
+  if (party.deck.length < n) { party.deck = mischen(party.deck.concat(party.ablage)); party.ablage = []; }
   else party.deck = mischen(party.deck);
-  return party.deck.slice(0, PASCHKARTEN);
+  return party.deck.slice(0, n);
 }
 function kartenVerbrauchen(ks) { ks.forEach(k => { const i = party.deck.indexOf(k); if (i >= 0) party.deck.splice(i, 1); party.ablage.push(k); }); }
 function paschStart(eule, extra) {
   const d = { art: 'pasch', extra: !!extra, eule: !!eule, schritt: 0 };
-  if (party.digK) d.karten = kartenZiehen();
+  if (party.digK) d.karten = kartenZiehen(eule ? EULENPASCHKARTEN : PASCHKARTEN);
   state.dialog = d; render(false);
 }
 function paschOeffnen() { if (R().status !== 'offen') return; paschStart(false, false); }
@@ -538,7 +538,7 @@ function wuerfeln() {
    Zahl schon in der Zeile ohne Eule: genullt (außer ein Wiederholungs-Joker wurde vorher angesagt). */
 function auswerten(w) {
   const r = R(), a = w.a, b = w.b, eulen = (a === EULE_WERT ? 1 : 0) + (b === EULE_WERT ? 1 : 0);
-  if (eulen === 2) { w.text = 'Zwei Eulen: Pasch!'; paschStart(true, false); return; }
+  if (eulen === 2) { w.text = 'Zwei Eulen: Eulen-Pasch!'; paschStart(true, false); return; }
   if (a === b) { w.text = 'Zweimal die ' + a + ': Pasch!'; paschStart(false, false); return; }
   const n = Math.max(a, b), dup = r.f.some(e => !e.p && e.n === n);
   if (eulen === 1) {
@@ -550,8 +550,10 @@ function auswerten(w) {
   }
   if (dup && !r.zc) {
     w.text = 'Die ' + n + ' steht schon in der Zeile: genullt.';
-    merken(); r.status = 'genullt'; zielPruefen(); speichern(); render(true);
-    toast(r.klammer === null ? 'Genullt – 0 Punkte für diese Runde, du setzt aus.' : 'Genullt – die Punkte bis zur Klammer ) bleiben dir.'); return;
+    merken(); r.status = 'genullt'; zielPruefen();
+    if (!state.dialog) state.dialog = { art: 'genullt', n };     // Hinweis mit Rückgängig, falls etwas falsch behandelt wurde
+    else toast('Genullt: Die ' + n + ' steht schon in der Zeile.');
+    speichern(); render(true); return;
   }
   w.text = dup ? 'Die ' + n + ' steht schon in der Zeile, aber dein Wiederholungs-Joker greift.' : 'Höherer Würfel: ' + n + '.';
   zahlTippen(n);
@@ -783,7 +785,8 @@ function regeln() {
     '<div class="karte"><h3>Würfel und Karten in der App</h3><ul>' +
     '<li><b>Würfel:</b> zwei W12, auf der 1 sitzt die Eule. Es zählt der höhere Würfel, die Eule gilt als 1.</li>' +
     '<li><b>Eule rettet:</b> Würfelst du eine Eule und die andere Zahl steht schon in der Zeile, wird nichts eingetragen, du wirfst nochmal. Eule und neue Zahl: Die Zahl wird normal eingetragen.</li>' +
-    '<li><b>Pasch:</b> Zwei Eulen oder zweimal dieselbe Zahl. Du ziehst ' + PASCHKARTEN + ' Karten und wählst eine davon.</li>' +
+    '<li><b>Pasch:</b> Zweimal dieselbe Zahl. Du ziehst ' + PASCHKARTEN + ' Karte.</li>' +
+    '<li><b>Eulen-Pasch:</b> Zwei Eulen. Du ziehst ' + EULENPASCHKARTEN + ' Karten und wählst eine davon.</li>' +
     '<li><b>Doppelte Zahl ohne Eule:</b> genullt, außer du hast vorher einen Wiederholungs-Joker angesagt.</li>' +
     '<li><b>Karten:</b> Das Deck (' + neuesDeck().length + ' Karten) ist ein eigenes Deck dieser App und enthält keine Karten aus dem Originalspiel. Der Ablagestapel wird neu gemischt, wenn der Stapel zu klein wird.</li>' +
     '<li><b>Echte Würfel oder Karten:</b> Beim Start der Partie wählbar. Mit „Zahl von Hand eintragen“ und dem Pasch-Knopf geht beides auch mit echtem Material.</li>' +
@@ -821,7 +824,19 @@ function dialog() {
   if (d.art === 'joker') return jokerDialog(d);
   if (d.art === 'ziel') return zielDialog();
   if (d.art === 'weiter') return weiterDialog();
+  if (d.art === 'genullt') return genulltDialog(d);
   return '';
+}
+/* Hinweis nach automatischem Nullen: nichts ist endgültig, ↶ stellt die Runde vor dem Wurf wieder her */
+function genulltDialog(d) {
+  const r = R(), w = state.wurf;
+  return ov('<div class="dt">Genullt</div>' +
+    (w ? '<div class="dice" style="margin-top:8px">' + dieHtml(w.a) + dieHtml(w.b) + '</div>' : '') +
+    '<div class="ds">Die ' + d.n + ' steht schon in der Zeile, und es war weder eine Eule dabei noch ein Wiederholungs-Joker angesagt. ' +
+    (r.klammer === null ? 'Die Runde zählt 0 Punkte, du setzt aus.' : 'Die Punkte bis zur Klammer ) bleiben dir, du setzt aus.') + '</div>' +
+    '<div class="opts"><button class="opt bad" data-a="undo"><span class="ic" style="color:var(--bad)">↶</span><div><div class="nm">Fehler? Rückgängig</div><div class="bs">Stellt die Runde vor diesem Wurf wieder her.</div></div></button></div>' +
+    '<button class="btn pink gross" style="width:100%" data-a="dlgzu">Verstanden</button>' +
+    '<p class="klein" style="text-align:center;margin-top:10px">Auch später möglich: ↶ oben oder „Wieder öffnen“.</p>');
 }
 function ov(inh, schliessbar) { return '<div class="ov" data-a="ovzu"' + (schliessbar === false ? ' data-fest="1"' : '') + '><div class="dlg">' + inh + '</div></div>'; }
 const defaultSetup = () => ({ modus: party.sheets.length > 1 ? 'multi' : 'solo', n: Math.max(2, party.sheets.length), namen: party.sheets.map(s => s.name), digW: party.digW, digK: party.digK });
@@ -878,8 +893,9 @@ function paschKartenDialog(d) {
     }
     return ov(kopfz + inh + '<button class="abbr" data-a="pback">Zurück</button>');
   }
-  return ov(kopfz + '<div class="ds">Du ziehst ' + d.karten.length + ' Karten und darfst eine davon wählen. Der Pasch selbst bringt keine Punkte.</div>' +
-    '<div class="kartenreihe">' + d.karten.map((k, ix) => karteHtml(k, 'data-a="kw" data-ix="' + ix + '"')).join('') + '</div>' +
+  const nk = d.karten.length;
+  return ov(kopfz + '<div class="ds">' + (nk > 1 ? 'Du ziehst ' + nk + ' Karten und darfst eine davon wählen.' : 'Du ziehst eine Karte. Tippe sie an, um sie zu übernehmen.') + ' Der Pasch selbst bringt keine Punkte.</div>' +
+    '<div class="kartenreihe" style="grid-template-columns:repeat(' + nk + ',minmax(0,1fr))' + (nk === 1 ? ';max-width:190px;margin-left:auto;margin-right:auto' : '') + '">' + d.karten.map((k, ix) => karteHtml(k, 'data-a="kw" data-ix="' + ix + '"')).join('') + '</div>' +
     '<p class="klein" style="text-align:center;margin-bottom:8px">Stapel: ' + party.deck.length + ' Karten</p>' +
     '<button class="abbr" data-a="dlgzu">Abbrechen</button>');
 }

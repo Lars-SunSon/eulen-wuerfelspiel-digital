@@ -11,16 +11,17 @@ Eine einzige `index.html`, läuft offline im Browser (Handy, Tablet, PC). Erweit
 **Würfel:** zwei W12, auf der 1 sitzt die Eule. Es zählt der höhere Würfel, die Eule gilt als 1.
 - Eule und eine Zahl, die schon in der Zeile steht: Die Eule rettet, nichts wird eingetragen, du wirfst nochmal.
 - Eule und neue Zahl: Die Zahl wird normal eingetragen.
-- Zwei Eulen: Pasch.
-- Doppelte Zahl ohne Eule: genullt, außer ein Wiederholungs-Joker wurde vorher angesagt.
+- Zweimal dieselbe Zahl: Pasch.
+- Zwei Eulen: Eulen-Pasch.
+- Doppelte Zahl ohne Eule: genullt, außer ein Wiederholungs-Joker wurde vorher angesagt. Die App zeigt das mit einem
+  Hinweis an. Ein Fehler lässt sich dort mit „Rückgängig“ zurücknehmen, später auch über ↶ oben oder „Wieder öffnen“.
 
-**Pasch und Karten:** Bei einem Pasch zieht die App drei Karten, eine davon wird gewählt. Das Deck (30 Karten) ist ein
-**eigenes Deck dieser App** und enthält keine Karten aus dem Originalspiel. Karten, die einen neuen Wurf verlangen,
-würfeln direkt in der App.
+**Pasch und Karten:** Ein Pasch (auch der Pasch-Joker) zieht eine Karte, ein Eulen-Pasch zieht drei Karten, eine davon wird
+gewählt. Das Deck (30 Karten) ist ein **eigenes Deck dieser App** und enthält keine Karten aus dem Originalspiel. Karten,
+die einen neuen Wurf verlangen, würfeln direkt in der App.
 
 **Annahmen, die nicht aus dem Spiel bestätigt sind** (Konstanten oben in `index.html`, leicht änderbar):
-- Auch zweimal dieselbe Zahl gilt als Pasch.
-- Jeder Pasch (auch der Pasch-Joker) zieht `PASCHKARTEN = 3` Karten.
+- Der Eulen-Pasch zieht `EULENPASCHKARTEN = 3` Karten, jeder andere Pasch `PASCHKARTEN = 1`.
 - Zusammensetzung und Wirkung des Decks (`KARTEN`, `DECK`) sind frei erfunden.
 
 **Mehrere Spieler:** Oben tippst du einen Spieler an. „Nächster Spieler“ springt zum nächsten, der noch spielt. Sind alle
