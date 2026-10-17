@@ -812,6 +812,21 @@ function blatt() {
     '<div class="zeile2"><button class="btn still" data-a="new">Neues Spiel</button></div></div>';
   return h;
 }
+/* 222-Hinweis als Pop-up: erscheint einmal, bis der Spieler mit OK bestätigt */
+function zielHinweisKey() {
+  if (state.tab !== 'spiel' || state.phase !== 'play' || !state.setupDone || state.pendingNew) return null;
+  if (mehrere()) return party.zielAktiv && !party.zielSeen ? 'm' : null;
+  return gesamt() >= ZIEL && !state.zielSeen ? 's' : null;
+}
+function zielHinweisDialog() {
+  const k = zielHinweisKey(); if (!k) return '';
+  let t;
+  if (k === 'm') t = 'Die Runde wird für alle zu Ende gespielt, danach ist die Partie beendet.';
+  else { const r = R(); t = r.status === 'offen' && r.f.length ? 'Du darfst in dieser Runde noch weiter Punkte holen. Sobald du aussteigst oder nullst, ist die Partie beendet und du siehst deine Gesamtpunkte.' : 'Schließe die Runde ab, dann ist die Partie beendet.'; }
+  return ov('<div class="dt">' + ZIEL + (k === 'm' ? ' erreicht!' : ' geknackt!') + '</div><div class="ds">' + t + '</div>' +
+    '<div style="text-align:center;margin-bottom:14px"><div class="flap" style="display:inline-block;font-size:46px;padding:4px 28px">' + fmt(gesamt()) + '</div><div class="klein" style="margin-top:6px">Gesamtpunkte</div></div>' +
+    '<button class="btn pink gross" style="width:100%" data-a="zielok">OK</button>', false);
+}
 function banner() {
   const g = gesamt();
   if (mehrere() && state.phase === 'play' && party.zielAktiv) return '<div class="banner"><b>' + ZIEL + ' erreicht!</b> Die Runde wird für alle zu Ende gespielt, danach ist die Partie beendet.</div>';
@@ -822,7 +837,7 @@ function banner() {
 }
 function spiel() {
   if (state.phase === 'done') return endstand();
-  return '<div class="screen">' + banner() + spielerLeiste() + blatt() + '</div>';
+  return '<div class="screen">' + spielerLeiste() + blatt() + '</div>';
 }
 function endstand() {
   return '<div class="screen"><div class="karte" style="text-align:center;padding:26px 16px"><div class="titel">Endstand' + (state.name ? ' · ' + esc(state.name) : '') + '</div>' +
@@ -869,7 +884,7 @@ function regeln() {
 /* Dialoge */
 function dialog() {
   if (state.pendingNew || !state.setupDone) return setupDialog();
-  const d = state.dialog; if (!d) return '';
+  const d = state.dialog; if (!d) return zielHinweisDialog();
   if (d.art === 'doppelt') return doppeltDialog(d);
   if (d.art === 'pasch') return paschDialog(d);
   if (d.art === 'feld') return feldDialog(d);
@@ -1106,10 +1121,11 @@ document.addEventListener('click', ev => {
   else if (a === 'joker') jokerTippen(i);
   else if (a === 'runde') { rundeWechseln(i); }
   else if (a === 'weiter') weiter();
-  else if (a === 'weiterspielen') { merken(); sync(); party.zielAktiv = false; party.sheets.forEach(s => { s.phase = 'play'; }); state.phase = 'play'; speichern(); render(false); }
+  else if (a === 'weiterspielen') { merken(); sync(); party.zielAktiv = false; party.zielSeen = false; state.zielSeen = false; party.sheets.forEach(s => { s.phase = 'play'; }); state.phase = 'play'; speichern(); render(false); }
   else if (a === 'feld') { state.dialog = { art: 'feld', i }; render(false); }
   else if (a === 'detail') { state.cur = i; state.dialog = { art: 'detail', i }; speichern(); render(false); }
   else if (a === 'dw') doppeltWahl(b.dataset.w);
+  else if (a === 'zielok') { if (mehrere()) party.zielSeen = true; else state.zielSeen = true; speichern(); render(false); }
   else if (a === 'dlgzu') { state.dialog = null; render(false); }
   else if (a === 'eule') { state.dialog.eule = b.dataset.e === '1'; render(false); }
   else if (a === 'pk') {
