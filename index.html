@@ -1000,6 +1000,17 @@ function paschDialog(d) {
   if (d.karten && !(d.schritt === 1 && !party.digW)) return paschKartenDialog(d);
   const r = R();
   const kopfz = '<div class="dt">' + (d.extra ? 'Pasch-Joker' : 'Pasch') + ' · ' + feldName(r.f.length) + '</div>';
+  if (d.schritt === 1 && party.digW) {          // echte Karten, digitale Würfel: Wurf der Karte in der App würfeln
+    const mal = d.mal === 2 ? 2 : 1, w = d.wurf;
+    let inh = '<div class="ds">' + (mal === 2 ? 'Die Karte verlangt einen neuen Wurf, der Wert zählt doppelt.' : 'Die Karte verlangt einen neuen Wurf, der Wert wird eingetragen.') + '</div>';
+    if (!w) inh += '<div class="dice" style="margin-bottom:12px">' + dieHtml(null, false, 0) + dieHtml(null, false, 1) + '</div><button class="btn pink gross" style="width:100%;margin-bottom:6px" data-a="kwurf">Würfeln</button>';
+    else {
+      const wv = wurfWert(w.a, w.b), v = wv * mal;
+      inh += '<div class="dice">' + dieHtml(w.a, !!w.anim, 0) + dieHtml(w.b, !!w.anim, 1) + '</div><div class="ds">' + (w.a === EULE_WERT && w.b === EULE_WERT ? 'Zwei Eulen: Eulen-Pasch, Wert 15' : 'Höherer Würfel: ' + wv) + (mal === 2 ? ', verdoppelt: ' + v : '') + '.</div>' +
+        '<button class="btn gruen gross" style="width:100%;margin-bottom:6px" data-a="kok">Eintragen: ' + v + ' Punkte</button>';
+    }
+    return ov(kopfz + inh + '<button class="abbr" data-a="pback">Zurück</button>');
+  }
   if (d.schritt === 1) {
     const mal = d.mal === 2 ? 2 : 1;
     let pad = '<div class="pad k">';
