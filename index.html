@@ -839,12 +839,13 @@ function spiel() {
   if (state.phase === 'done') return endstand();
   return '<div class="screen">' + spielerLeiste() + blatt() + '</div>';
 }
+const alleRundenGespielt = () => party.sheets.every((s, i) => { const x = i === party.active ? state : s; return x.cur >= RUNDEN - 1 && x.rounds[x.cur].status !== 'offen'; });
 function endstand() {
   return '<div class="screen"><div class="karte" style="text-align:center;padding:26px 16px"><div class="titel">Endstand' + (state.name ? ' · ' + esc(state.name) : '') + '</div>' +
     '<div class="flap" id="rt-val" style="display:inline-block;font-size:54px;margin:16px 0;padding:6px 30px">' + fmt(gesamt()) + '</div>' +
     '<p class="klein">Genullte Runden: <b>' + nullrunden() + '</b> · Joker eingesetzt: <b>' + state.joker.filter(j => j.used !== null).length + '</b> von ' + state.joker.filter(j => j.typ).length + '</p>' +
     '<p class="klein" style="margin-top:8px">Bei Gleichstand gewinnt, wer seltener genullt hat. Dein Blatt siehst du unten.</p>' +
-    '<div class="zeile2" style="margin-top:14px">' + (mehrere() || gesamt() < ZIEL ? '<button class="btn still" data-a="weiterspielen">Doch weiterspielen</button>' : '') + '<button class="btn pink" data-a="new">Neues Spiel</button></div></div>' +
+    '<div class="zeile2" style="margin-top:14px">' + (!alleRundenGespielt() && (mehrere() || gesamt() < ZIEL) ? '<button class="btn still" data-a="weiterspielen">Doch weiterspielen</button>' : '') + '<button class="btn pink" data-a="new">Neues Spiel</button></div></div>' +
     (mehrere() ? rangliste() : '') + blatt() + '</div>';
 }
 
